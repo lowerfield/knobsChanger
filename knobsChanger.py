@@ -68,7 +68,7 @@ def changer():
         knobValue = knobObject.value()
 
         if knobObject != 'NoneType':
-            result = knobsChanger(knobClass,knobName,knobObject).showModalDialog()
+            result = KnobsChanger(knobClass,knobName,knobObject).showModalDialog()
         else:
             nuke.message("Knob does not exist")
             return
@@ -79,8 +79,7 @@ def changer():
                 if result[1] != '':
                     node[knobName].setExpression(result[1])
                 else:
-                    pass
+                    node[knobName].setExpression('')
             except:
                 pass
   
-
