@@ -29,19 +29,42 @@ class KnobsChanger(nukescripts.PythonPanel):
         self.addKnob(self.exprCheck)
         self.addKnob(self.expr)
 
+        self.autoUpdate = nuke.Boolean_Knob('', 'Enable UI update', True)
+        self.addKnob(self.autoUpdate)
+
+
+
     def knobChanged(self, knob):
         
         if self.exprCheck.value() == True:
             self.expr.setVisible(True)
+
+            if self.expr.value() != '':
+        
+                for self.node in self.nodes:
+        
+                    try:
+                        if self.expr.value() != '':
+                            self.node[self.knobName].setExpression(self.expr.value())
+                        else:
+                            self.node[self.knobName].clearAnimated()
+                            self.node[self.knobName].setValue(self.knob.value())
+                    except:
+                        pass
+
         else:
             self.expr.setVisible(False)
+            for self.node in self.nodes:
+                self.node[self.knobName].clearAnimated()
+                
 
-        if self.knob:
+        if self.knob and self.autoUpdate.value() == True:
             for self.node in self.nodes:
                 try:
                     self.node[self.knobName].setValue(self.knob.value())
                 except:
                     pass
+            
 
     def showModalDialog(self):
         nukescripts.PythonPanel.showModalDialog(self)
@@ -92,14 +115,4 @@ def knobsChanger():
             nuke.message("Knob does not exist")
             return
 
-        for node in nodes:
-
-            try:
-                if result[1] != '':
-                    node[knobName].setExpression(result[1])
-                else:
-                    node[knobName].clearAnimated()
-                  
-            except:
-                pass
   
