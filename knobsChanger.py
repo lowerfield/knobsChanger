@@ -6,13 +6,13 @@ class KnobsChanger(nukescripts.PythonPanel):
     def __init__(self, knobClass, knobName, knobObject):
         nukescripts.PythonPanel.__init__( self, "Parameter Changer")
 
-        knobT = getattr(nuke,knobClass)
+        knobToChange = getattr(nuke,knobClass)
 
         if knobClass in ('Enumeration_Knob', 'Pulldown_Knob'):
             enumValues = knobObject.values()
-            self.knob = knobT(knobName, knobName, enumValues)
+            self.knob = knobToChange(knobName, knobName, enumValues)
         else:
-            self.knob = knobT(knobName)
+            self.knob = knobToChange(knobName)
            
         self.addKnob(self.knob)
          
@@ -30,35 +30,40 @@ class KnobsChanger(nukescripts.PythonPanel):
         else:
             self.expr.setVisible(False)
 
-
     def showModalDialog(self):
         nukescripts.PythonPanel.showModalDialog(self)
 
         return self.knob.value(), self.expr.value()
 
-def changer():
+def knobsChanger():
     
         nodes = nuke.selectedNodes()
         
         if nodes:  
             # this if statement remembers the last entry, using par variable out of function
+
             if par != []:
                 knob = nuke.getInput('Parameter to change', ' '.join(par))
-                if knob == None:
 
+                if knob == None:
                     pass
+
                 else:
                     par.pop()
                     par.append(knob)
+
             else:
                 knob = nuke.getInput('Parameter to change', '')
                 par.append(knob)
+
                 if knob == None:
                     par.pop()
         
-        for node in nodes:    
+        for node in nodes:   
+
             if node['%s'%knob] == 'NoneType':
                 pass
+
             else:
                 knobObject = node['%s'%knob]
                 break
@@ -69,17 +74,20 @@ def changer():
 
         if knobObject != 'NoneType':
             result = KnobsChanger(knobClass,knobName,knobObject).showModalDialog()
+
         else:
             nuke.message("Knob does not exist")
             return
 
         for node in nodes:
+
             try:
-                node[knobName].setValue(result[0])
                 if result[1] != '':
                     node[knobName].setExpression(result[1])
                 else:
-                    node[knobName].setExpression('')
+                    node[knobName].clearAnimated()
+                    node[knobName].setValue(result[0])
+                    
             except:
                 pass
   
