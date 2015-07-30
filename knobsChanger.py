@@ -3,18 +3,24 @@ par = [] # this will remember the last entry, keep it out of the funcion
 
 class KnobsChanger(nukescripts.PythonPanel):
 
-    def __init__(self, knobClass, knobName, knobObject):
+    def __init__(self, knobClass, knobName, knobObject, nodes):
         nukescripts.PythonPanel.__init__( self, "Parameter Changer")
+
+        self.knobObject = knobObject
+        self.nodes = nodes
+        self.knobName = knobName
 
         knobToChange = getattr(nuke,knobClass)
 
+
         if knobClass in ('Enumeration_Knob', 'Pulldown_Knob'):
-            enumValues = knobObject.values()
+            enumValues = self.knobObject.values()
             self.knob = knobToChange(knobName, knobName, enumValues)
         else:
             self.knob = knobToChange(knobName)
            
         self.addKnob(self.knob)
+        self.knob.setValue(knobObject.value())
          
         self.exprCheck = nuke.Boolean_Knob('Set expression')
         self.exprCheck.clearFlag(nuke.STARTLINE)
@@ -29,6 +35,13 @@ class KnobsChanger(nukescripts.PythonPanel):
             self.expr.setVisible(True)
         else:
             self.expr.setVisible(False)
+
+        if self.knob:
+            for self.node in self.nodes:
+                try:
+                    self.node[self.knobName].setValue(self.knob.value())
+                except:
+                    pass
 
     def showModalDialog(self):
         nukescripts.PythonPanel.showModalDialog(self)
@@ -73,7 +86,7 @@ def knobsChanger():
         knobValue = knobObject.value()
 
         if knobObject != 'NoneType':
-            result = KnobsChanger(knobClass,knobName,knobObject).showModalDialog()
+            result = KnobsChanger(knobClass,knobName,knobObject,nodes).showModalDialog()
 
         else:
             nuke.message("Knob does not exist")
@@ -86,8 +99,7 @@ def knobsChanger():
                     node[knobName].setExpression(result[1])
                 else:
                     node[knobName].clearAnimated()
-                    node[knobName].setValue(result[0])
-                    
+                  
             except:
                 pass
   
