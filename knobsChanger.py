@@ -1,10 +1,10 @@
 
 par = [] # this will remember the last entry, keep it out of the funcion
 
-class knobsChanger(nukescripts.PythonPanel):
+class KnobsChanger(nukescripts.PythonPanel):
 
     def __init__(self, knobClass, knobName, knobObject):
-        nukescripts.PythonPanel.__init__( self, "test")
+        nukescripts.PythonPanel.__init__( self, "Parameter Changer")
 
         knobT = getattr(nuke,knobClass)
 
@@ -18,10 +18,9 @@ class knobsChanger(nukescripts.PythonPanel):
          
         self.exprCheck = nuke.Boolean_Knob('Set expression')
         self.exprCheck.clearFlag(nuke.STARTLINE)
-        self.addKnob(self.exprCheck)
-
         self.expr = nuke.EvalString_Knob('=')
         self.expr.setVisible(False)
+        self.addKnob(self.exprCheck)
         self.addKnob(self.expr)
 
     def knobChanged(self, knob):
@@ -31,10 +30,11 @@ class knobsChanger(nukescripts.PythonPanel):
         else:
             self.expr.setVisible(False)
 
+
     def showModalDialog(self):
         nukescripts.PythonPanel.showModalDialog(self)
 
-        return self.knob.value(),  self.expr.value()
+        return self.knob.value(), self.expr.value()
 
 def changer():
     
@@ -55,13 +55,23 @@ def changer():
                 par.append(knob)
                 if knob == None:
                     par.pop()
-            
-        knobObject = nuke.selectedNode().knob('%s' %knob)
+        
+        for node in nodes:    
+            if node['%s'%knob] == 'NoneType':
+                pass
+            else:
+                knobObject = node['%s'%knob]
+                break
+
         knobName = knobObject.name()
         knobClass = knobObject.Class()
         knobValue = knobObject.value()
 
-        result = knobsChanger(knobClass,knobName,knobObject).showModalDialog()
+        if knobObject != 'NoneType':
+            result = knobsChanger(knobClass,knobName,knobObject).showModalDialog()
+        else:
+            nuke.message("Knob does not exist")
+            return
 
         for node in nodes:
             try:
@@ -73,4 +83,4 @@ def changer():
             except:
                 pass
   
-# got to fix mask
+
