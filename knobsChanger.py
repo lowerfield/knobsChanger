@@ -52,7 +52,8 @@ class KnobsChanger(nukescripts.PythonPanel):
                     except:
                         pass
 
-        else:
+        elif self.exprCheck.value() == False:
+
             self.expr.setVisible(False)
             for self.node in self.nodes:
                 self.node[self.knobName].clearAnimated()
