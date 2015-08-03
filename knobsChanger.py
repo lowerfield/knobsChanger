@@ -55,9 +55,10 @@ class KnobsChanger(nukescripts.PythonPanel):
         # main knob callbacks    
         if self.knob and self.autoUpdate.value() == True:
             for self.node in self.nodes:
-                try:
-                    self.node[self.knobName].setExpression('')
+                try:                  
                     self.node[self.knobName].setValue(self.knob.value())
+                    if self.node[self.knobName].isAnimated():
+                        self.node[self.knobName].setExpression('')
                 except:
                     pass
 
