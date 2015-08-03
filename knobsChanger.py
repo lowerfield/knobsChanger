@@ -23,51 +23,68 @@ class KnobsChanger(nukescripts.PythonPanel):
         self.addKnob(self.knob)
         self.knob.setValue(knobObject.value())
 
+        # add auto update knob
+        self.autoUpdate = nuke.Boolean_Knob('', 'Enable UI update')
+        self.addKnob(self.autoUpdate)
+
         # add set expression and expression knobs 
         self.exprCheck = nuke.Boolean_Knob('Set expression')
         self.exprCheck.clearFlag(nuke.STARTLINE)
-        self.expr = nuke.EvalString_Knob('=')
-        self.expr.setVisible(False)
         self.addKnob(self.exprCheck)
-        self.addKnob(self.expr)
 
-        # add auto update knob
-        self.autoUpdate = nuke.Boolean_Knob('', 'Enable UI update', True)
-        self.addKnob(self.autoUpdate)
+        self.expr = {}
+        
+        for pos in range(knobObject.arraySize()):
+            name = knobObject.names(pos)
+            self.expr[name] = nuke.EvalString_Knob(name, '=')
+
+        for k,v in self.expr.items():
+            k = v
+            k.setVisible(False)
+            self.addKnob(k)
 
         # CALLBACKS
     def knobChanged(self, knob):
         
-        # expression callbacks
-        if self.exprCheck.value() == True:
-            self.expr.setVisible(True)
-
-            if self.expr.value() != '':
-        
-                for self.node in self.nodes:
-        
-                    try:
-                        if self.expr.value() != '':
-                            self.node[self.knobName].setExpression(self.expr.value())
-                        else:
-                            self.node[self.knobName].clearAnimated()
-                            self.node[self.knobName].setValue(self.knob.value())
-                    except:
-                        pass
-
-        elif self.exprCheck.value() == False:
-
-            self.expr.setVisible(False)
-            for self.node in self.nodes:
-                self.node[self.knobName].clearAnimated()
-
         # main knob callbacks    
         if self.knob and self.autoUpdate.value() == True:
             for self.node in self.nodes:
                 try:
+                    self.node[self.knobName].setExpression('')
                     self.node[self.knobName].setValue(self.knob.value())
                 except:
                     pass
+
+        # expression callbacks
+        self.exprValues = []
+        if self.exprCheck.value() == True:
+            
+            for k,v in self.expr.items():
+                k = v
+                k.setVisible(True)
+                self.exprValues.append(k.value())
+
+        elif self.exprCheck.value() == False:
+    
+            for k,v in self.expr.items():
+                k = v
+                k.setVisible(False)
+
+        if self.expr.items() and self.autoUpdate.value() == True:
+
+                for k in self.exprValues:
+                    for self.node in self.nodes:                                  
+                        try:
+                            if k != '':
+                                self.node[self.knobName].setExpression(k,self.exprValues.index(k))
+                            else:
+                                self.node[self.knobName].setExpression('',self.exprValues.index(k))
+                                self.node[self.knobName].setValue(self.knob.value())
+                        except:
+                                pass
+
+
+
         # auto update callback, if false will return[1] false so we can
         # change all the knobs outside the class
         if self.autoUpdate.value() == False:   
@@ -78,7 +95,7 @@ class KnobsChanger(nukescripts.PythonPanel):
     def showModalDialog(self):
         nukescripts.PythonPanel.showModalDialog(self)
 
-        return self.knob.value(), self.autoUpdateF
+        return self.knob.value(), self.autoUpdateF, self.exprCheck.value(), self.exprValues
 
 def knobsChanger():
     
@@ -123,11 +140,28 @@ def knobsChanger():
             nuke.message("Knob does not exist")
             return
 
+        # this updates all nodes values when autoUpdate is off
         if result[1] == False:
             for node in nodes:
                 try:
                     node[knobName].setValue(result[0])
                 except:
                     pass
-        else:
-            pass
+        # this deals with the expression, only works when exprCheck is True
+        if result[2] == True:
+
+                for k in result[3]:
+                    for node in nodes:                                  
+                        try:
+                            if k != '':
+                                node[knobName].setExpression(k,result[3].index(k))
+                            else:
+                                node[knobName].setExpression('',result[3].index(k))
+                                node[knobName].setValue(result[0])
+                        except:
+                                pass
+
+
+
+
+
