@@ -32,10 +32,16 @@ class KnobsChanger(nukescripts.PythonPanel):
         self.exprCheck.clearFlag(nuke.STARTLINE)
         self.addKnob(self.exprCheck)
 
-        self.expr = {}
-        
+        if knobClass in ('Enumeration_Knob', 'Pulldown_Knob'):
+            self.exprCheck.setVisible(False)
+
+
+        self.expr = {}      
         for pos in range(knobObject.arraySize()):
-            name = knobObject.names(pos)
+            if hasattr(knobObject, 'names'):
+                name = knobObject.names(pos)
+            else:
+                name = knobObject.name()
             self.expr[name] = nuke.EvalString_Knob(name, '=')
 
         for k,v in self.expr.items():
@@ -64,8 +70,7 @@ class KnobsChanger(nukescripts.PythonPanel):
                 k.setVisible(True)
                 self.exprValues.append(k.value())
 
-        elif self.exprCheck.value() == False:
-    
+        elif self.exprCheck.value() == False:   
             for k,v in self.expr.items():
                 k = v
                 k.setVisible(False)
@@ -82,8 +87,6 @@ class KnobsChanger(nukescripts.PythonPanel):
                                 self.node[self.knobName].setValue(self.knob.value())
                         except:
                                 pass
-
-
 
         # auto update callback, if false will return[1] false so we can
         # change all the knobs outside the class
@@ -160,8 +163,5 @@ def knobsChanger():
                                 node[knobName].setValue(result[0])
                         except:
                                 pass
-
-
-
 
 
