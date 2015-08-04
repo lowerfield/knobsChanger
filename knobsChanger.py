@@ -40,6 +40,8 @@ class KnobsChanger(nukescripts.PythonPanel):
         for pos in range(knobObject.arraySize()):
             if hasattr(knobObject, 'names'):
                 name = knobObject.names(pos)
+            elif knobClass == 'IArray_Knob':
+                name = knobName + str(pos)
             else:
                 name = knobObject.name()
             self.expr[name] = nuke.EvalString_Knob(name, '=')
@@ -57,7 +59,10 @@ class KnobsChanger(nukescripts.PythonPanel):
             for self.node in self.nodes:
                 try:                  
                     self.node[self.knobName].setValue(self.knob.value())
-                    if self.node[self.knobName].isAnimated():
+                    if self.node[self.knobName].hasExpression() and self.node[self.knobName].getKeyList() == []:
+                        self.node[self.knobName].clearAnimation()
+                        self.node[self.knobName].setValue(self.knob.value())
+                    elif self.node[self.knobName].getKeyList() != []:
                         self.node[self.knobName].setExpression('')
                 except:
                     pass
@@ -72,6 +77,7 @@ class KnobsChanger(nukescripts.PythonPanel):
                 self.exprValues.append(k.value())
 
         elif self.exprCheck.value() == False:   
+
             for k,v in self.expr.items():
                 k = v
                 k.setVisible(False)
@@ -164,5 +170,4 @@ def knobsChanger():
                                 node[knobName].setValue(result[0])
                         except:
                                 pass
-
 
