@@ -35,15 +35,14 @@ class KnobsChanger(nukescripts.PythonPanel):
         if knobClass in ('Enumeration_Knob', 'Pulldown_Knob'):
             self.exprCheck.setVisible(False)
 
+        self.expr = {}
 
-        self.expr = {}      
-        for pos in range(knobObject.arraySize()):
-            if hasattr(knobObject, 'names'):
-                name = knobObject.names(pos)
-            elif knobClass == 'IArray_Knob':
-                name = knobName + str(pos)
-            else:
-                name = knobObject.name()
+        if hasattr(knobObject,'arraySize'):       
+            for pos in range(knobObject.arraySize()):
+                name = knobObject.name() + str(pos)
+                self.expr[name] = nuke.EvalString_Knob(name, '=')
+        else:
+            name = knobObject.name()
             self.expr[name] = nuke.EvalString_Knob(name, '=')
 
         for k,v in self.expr.items():
@@ -170,4 +169,5 @@ def knobsChanger():
                                 node[knobName].setValue(result[0])
                         except:
                                 pass
+
 
