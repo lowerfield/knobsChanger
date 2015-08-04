@@ -16,12 +16,31 @@ class KnobsChanger(nukescripts.PythonPanel):
         if knobClass in ('Enumeration_Knob', 'Pulldown_Knob'):
             enumValues = self.knobObject.values()
             self.knob = knobToChange(knobName, knobName, enumValues)
+            self.addKnob(self.knob)
+            self.knob.setValue(knobObject.value())
+
+        elif knobClass == 'IArray_Knob':
+            self.knob = {}
+
+            for pos in range(knobObject.arraySize()):
+                name = knobObject.name() + str(pos)
+                self.knob[name] = knobToChange(knobName, name)
+
+            count = 0
+            for k,v in sorted(self.knob.items()):
+                k = v
+                self.addKnob(k)
+                if count % self.knobObject.width() != 0:
+                    print k
+                    k.clearFlag(nuke.STARTLINE)
+                count += 1
+
         else:
             self.knob = knobToChange(knobName)
 
-        # add main knob and set default value 
-        self.addKnob(self.knob)
-        self.knob.setValue(knobObject.value())
+            # add main knob and set default value 
+            self.addKnob(self.knob)
+            self.knob.setValue(knobObject.value())
 
         # add auto update knob
         self.autoUpdate = nuke.Boolean_Knob('', 'Enable UI update')
@@ -41,6 +60,7 @@ class KnobsChanger(nukescripts.PythonPanel):
             for pos in range(knobObject.arraySize()):
                 name = knobObject.name() + str(pos)
                 self.expr[name] = nuke.EvalString_Knob(name, '=')
+
         else:
             name = knobObject.name()
             self.expr[name] = nuke.EvalString_Knob(name, '=')
@@ -169,5 +189,3 @@ def knobsChanger():
                                 node[knobName].setValue(result[0])
                         except:
                                 pass
-
-
