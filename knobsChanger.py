@@ -13,34 +13,36 @@ class KnobsChanger(nukescripts.PythonPanel):
         knobToChange = getattr(nuke,knobClass)
 
         # exceptions for those knob classes as they need more args
+        self.knob = {}
+
         if knobClass in ('Enumeration_Knob', 'Pulldown_Knob'):
             enumValues = self.knobObject.values()
-            self.knob = knobToChange(knobName, knobName, enumValues)
-            self.addKnob(self.knob)
-            self.knob.setValue(knobObject.value())
+            self.knob[self.knobName] = knobToChange(knobName, knobName, enumValues)
 
         elif knobClass == 'IArray_Knob':
-            self.knob = {}
 
             for pos in range(knobObject.arraySize()):
                 name = knobObject.name() + str(pos)
-                self.knob[name] = knobToChange(knobName, name)
+                self.knob[self.knobName] = knobToChange(knobName, name)
 
+        else:
+            self.knob[self.knobName] = knobToChange(knobName)
+
+        if knobClass == 'IArray_Knob':
             count = 0
             for k,v in sorted(self.knob.items()):
                 k = v
                 self.addKnob(k)
                 if count % self.knobObject.width() != 0:
-                    print k
                     k.clearFlag(nuke.STARTLINE)
                 count += 1
 
         else:
-            self.knob = knobToChange(knobName)
 
-            # add main knob and set default value 
-            self.addKnob(self.knob)
-            self.knob.setValue(knobObject.value())
+            for k,v in self.knob.items():
+                k = v
+                self.addKnob(k)
+                k.setValue(knobObject.value())
 
         # add auto update knob
         self.autoUpdate = nuke.Boolean_Knob('', 'Enable UI update')
@@ -67,20 +69,22 @@ class KnobsChanger(nukescripts.PythonPanel):
 
         for k,v in self.expr.items():
             k = v
-            k.setVisible(False)
             self.addKnob(k)
+            k.setVisible(False)
 
         # CALLBACKS
     def knobChanged(self, knob):
+
         
         # main knob callbacks    
-        if self.knob and self.autoUpdate.value() == True:
+        if self.knob[self.knobName] and self.autoUpdate.value() == True:
             for self.node in self.nodes:
+                self.knobSetValue = self.node[self.knobName].setValue(self.knob[self.knobName].value())
                 try:                  
-                    self.node[self.knobName].setValue(self.knob.value())
+                    self.knobSetValue
                     if self.node[self.knobName].hasExpression() and self.node[self.knobName].getKeyList() == []:
                         self.node[self.knobName].clearAnimation()
-                        self.node[self.knobName].setValue(self.knob.value())
+                        self.knobSetValue
                     elif self.node[self.knobName].getKeyList() != []:
                         self.node[self.knobName].setExpression('')
                 except:
@@ -104,13 +108,13 @@ class KnobsChanger(nukescripts.PythonPanel):
         if self.expr.items() and self.autoUpdate.value() == True:
 
                 for k in self.exprValues:
-                    for self.node in self.nodes:                                  
+                    for self.node in self.nodes:                               
                         try:
                             if k != '':
                                 self.node[self.knobName].setExpression(k,self.exprValues.index(k))
                             else:
                                 self.node[self.knobName].setExpression('',self.exprValues.index(k))
-                                self.node[self.knobName].setValue(self.knob.value())
+                                self.node[self.knobName].setValue(self.knob[self.knobName].value())
                         except:
                                 pass
 
@@ -124,7 +128,7 @@ class KnobsChanger(nukescripts.PythonPanel):
     def showModalDialog(self):
         nukescripts.PythonPanel.showModalDialog(self)
 
-        return self.knob.value(), self.autoUpdateF, self.exprCheck.value(), self.exprValues
+        return self.knob[self.knobName].value(), self.autoUpdateF, self.exprCheck.value(), self.exprValues
 
 def knobsChanger():
     
