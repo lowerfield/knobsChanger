@@ -77,30 +77,19 @@ class KnobsChanger(nukescripts.PythonPanel):
     def knobChanged(self, knob):
      
         # main knob callbacks 
-        if self.knobClass == 'IArray_Knob':
-            for k in sorted(self.knob.keys()): 
-                if self.knob[k] and self.autoUpdate.value() == True:
-                    for self.node in self.nodes:
-                        try:
-                            self.node[self.knobName].setValue(self.knob[k].value(),int(k))
-                            if self.node[self.knobName].hasExpression() and self.node[self.knobName].getKeyList() == []:
-                                self.node[self.knobName].clearAnimation()
-                                self.node[self.knobName].setValue(self.knob[k].value(),int(k))
-                            elif self.node[self.knobName].getKeyList() != []:
-                                self.node[self.knobName].setExpression('',int(k))
-                        except:
-                            pass
-        else:
-            if self.knob[self.knobName] and self.autoUpdate.value() == True:
+        for k in sorted(self.knob.keys()): 
+            if self.knob[k] and self.autoUpdate.value() == True:
                 for self.node in self.nodes:
-                    self.knobSetValue = self.node[self.knobName].setValue(self.knob[self.knobName].value())
-                    try:           
-                        self.knobSetValue
+                    try:
+                        if self.knobClass == 'IArray_Knob':
+                            self.knobSetValue = self.node[self.knobName].setValue(self.knob[k].value(),int(k))
+                        else:
+                            self.knobSetValue = self.node[self.knobName].setValue(self.knob[self.knobName].value())
                         if self.node[self.knobName].hasExpression() and self.node[self.knobName].getKeyList() == []:
                             self.node[self.knobName].clearAnimation()
                             self.knobSetValue
                         elif self.node[self.knobName].getKeyList() != []:
-                            self.node[self.knobName].setExpression('')
+                            self.node[self.knobName].setExpression('',int(k))
                     except:
                         pass
 
@@ -133,7 +122,7 @@ class KnobsChanger(nukescripts.PythonPanel):
                                 pass
 
         # auto update callback, if false will return[1] false so we can
-        # change all the knobs outside the class
+        # change all the knobs outside the class, when the panle is closed
         if self.autoUpdate.value() == False:   
             self.autoUpdateF = False
         else:
@@ -142,7 +131,7 @@ class KnobsChanger(nukescripts.PythonPanel):
     def showModalDialog(self):
         nukescripts.PythonPanel.showModalDialog(self)
 
-        return self.knob[self.knobName].value(), self.autoUpdateF, self.exprCheck.value(), self.exprValues
+        return self.knob[self.knobName].value(), self.autoUpdateF, self.exprCheck.value(), self.exprValues, self.knob
 
 def knobsChanger():
     
