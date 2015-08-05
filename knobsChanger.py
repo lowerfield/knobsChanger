@@ -6,6 +6,7 @@ class KnobsChanger(nukescripts.PythonPanel):
     def __init__(self, knobClass, knobName, knobObject, nodes):
         nukescripts.PythonPanel.__init__( self, "Parameter Changer")
 
+        self.knobClass = knobClass 
         self.knobObject = knobObject
         self.nodes = nodes
         self.knobName = knobName
@@ -22,8 +23,8 @@ class KnobsChanger(nukescripts.PythonPanel):
         elif knobClass == 'IArray_Knob':
 
             for pos in range(knobObject.arraySize()):
-                name = knobObject.name() + str(pos)
-                self.knob[self.knobName] = knobToChange(knobName, name)
+                name = str(pos)
+                self.knob[name] = knobToChange(knobName, name)
 
         else:
             self.knob[self.knobName] = knobToChange(knobName)
@@ -74,21 +75,34 @@ class KnobsChanger(nukescripts.PythonPanel):
 
         # CALLBACKS
     def knobChanged(self, knob):
-
-        
-        # main knob callbacks    
-        if self.knob[self.knobName] and self.autoUpdate.value() == True:
-            for self.node in self.nodes:
-                self.knobSetValue = self.node[self.knobName].setValue(self.knob[self.knobName].value())
-                try:                  
-                    self.knobSetValue
-                    if self.node[self.knobName].hasExpression() and self.node[self.knobName].getKeyList() == []:
-                        self.node[self.knobName].clearAnimation()
+     
+        # main knob callbacks 
+        if self.knobClass == 'IArray_Knob':
+            for k in sorted(self.knob.keys()): 
+                if self.knob[k] and self.autoUpdate.value() == True:
+                    for self.node in self.nodes:
+                        try:
+                            self.node[self.knobName].setValue(self.knob[k].value(),int(k))
+                            if self.node[self.knobName].hasExpression() and self.node[self.knobName].getKeyList() == []:
+                                self.node[self.knobName].clearAnimation()
+                                self.node[self.knobName].setValue(self.knob[k].value(),int(k))
+                            elif self.node[self.knobName].getKeyList() != []:
+                                self.node[self.knobName].setExpression('',int(k))
+                        except:
+                            pass
+        else:
+            if self.knob[self.knobName] and self.autoUpdate.value() == True:
+                for self.node in self.nodes:
+                    self.knobSetValue = self.node[self.knobName].setValue(self.knob[self.knobName].value())
+                    try:           
                         self.knobSetValue
-                    elif self.node[self.knobName].getKeyList() != []:
-                        self.node[self.knobName].setExpression('')
-                except:
-                    pass
+                        if self.node[self.knobName].hasExpression() and self.node[self.knobName].getKeyList() == []:
+                            self.node[self.knobName].clearAnimation()
+                            self.knobSetValue
+                        elif self.node[self.knobName].getKeyList() != []:
+                            self.node[self.knobName].setExpression('')
+                    except:
+                        pass
 
         # expression callbacks
         self.exprValues = []
