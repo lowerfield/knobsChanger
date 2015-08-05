@@ -76,6 +76,7 @@ class KnobsChanger(nukescripts.PythonPanel):
     def knobChanged(self, knob):
      
         # source knob callbacks 
+        self.knobValues = {}
         for k in sorted(self.knob.keys()): 
             if self.knob[k] and self.autoUpdate.value() == True:
                 for self.node in self.nodes:
@@ -91,6 +92,9 @@ class KnobsChanger(nukescripts.PythonPanel):
                             self.node[self.knobName].setExpression('',int(k))
                     except:
                         pass
+
+            elif self.knob[k] and self.autoUpdate.value() == False:
+                self.knobValues[k] = self.knob[k].value()
 
         # expression callbacks
         self.exprValues = []
@@ -117,7 +121,10 @@ class KnobsChanger(nukescripts.PythonPanel):
                                 self.node[self.knobName].setExpression(k,self.exprValues.index(k))
                             else:
                                 self.node[self.knobName].setExpression('',self.exprValues.index(k))
-                                self.node[self.knobName].setValue(self.knob[self.knobName].value())
+                                if self.knobClass == 'IArray_Knob':
+                                    self.node[self.knobName].setValue(self.knob[k].value(),int(k))
+                                else:
+                                    self.node[self.knobName].setValue(self.knob[self.knobName].value())
                         except:
                                 pass
 
@@ -129,73 +136,79 @@ class KnobsChanger(nukescripts.PythonPanel):
             self.autoUpdateF = True
 
         if self.knobClass == 'IArray_Knob':
-
+            self.knobValues = self.knobValues
+        else:
+            self.knobValues = self.knob[self.knobName].value()
 
     def showModalDialog(self):
         nukescripts.PythonPanel.showModalDialog(self)
 
-        return self.knob[self.knobName].value(), self.autoUpdateF, self.exprCheck.value(), self.exprValues, self.knob
+        return self.knobValues, self.autoUpdateF, self.exprCheck.value(), self.exprValues, self.knob
 
 def knobsChanger():
+
+    nodes = nuke.selectedNodes()
     
-        nodes = nuke.selectedNodes()
-        
-        if nodes:  
-            # this if statement remembers the last entry, using par variable out of function
+    if nodes:  
+        # this if statement remembers the last entry, using par variable out of function
 
-            if par != []:
-                knob = nuke.getInput('Parameter to change', ' '.join(par))
+        if par != []:
+            knob = nuke.getInput('Parameter to change', ' '.join(par))
 
-                if knob == None:
-                    pass
-
-                else:
-                    par.pop()
-                    par.append(knob)
-
-            else:
-                knob = nuke.getInput('Parameter to change', '')
-                par.append(knob)
-
-                if knob == None:
-                    par.pop()
-        
-        for node in nodes:   
-
-            if node['%s'%knob] == 'NoneType':
+            if knob == None:
                 pass
 
             else:
-                knobObject = node['%s'%knob]
-                break
+                par.pop()
+                par.append(knob)
 
-        knobName = knobObject.name()
-        knobClass = knobObject.Class()
-        knobValue = knobObject.value()
-
-        if knobObject != 'NoneType':
-            result = KnobsChanger(knobClass,knobName,knobObject,nodes).showModalDialog()
         else:
-            nuke.message("Knob does not exist")
-            return
+            knob = nuke.getInput('Parameter to change', '')
+            par.append(knob)
 
-        # this updates all nodes values when autoUpdate is off
-        if result[1] == False:
-            for node in nodes:
-                try:
+            if knob == None:
+                par.pop()
+    
+    for node in nodes:   
+
+        if node['%s'%knob] == 'NoneType':
+            pass
+
+        else:
+            knobObject = node['%s'%knob]
+            break
+
+    knobName = knobObject.name()
+    knobClass = knobObject.Class()
+    knobValue = knobObject.value()
+
+    if knobObject != 'NoneType':
+        result = KnobsChanger(knobClass,knobName,knobObject,nodes).showModalDialog()
+    else:
+        nuke.message("Knob does not exist")
+        return
+
+    # this updates all nodes values when autoUpdate is off
+    if result[1] == False:
+        for node in nodes:
+            try:
+                if knobClass == 'IArray_Knob':
+                    for k,v in sorted(result[0].items()):
+                        node[knobName].setValue(int(v),int(k))
+                else:
                     node[knobName].setValue(result[0])
-                except:
-                    pass
-        # this deals with the expression, only works when exprCheck is True
-        if result[2] == True:
+            except:
+                pass
+    # this deals with the expression, only works when exprCheck is True
+    if result[2] == True:
 
-                for k in result[3]:
-                    for node in nodes:                                  
-                        try:
-                            if k != '':
-                                node[knobName].setExpression(k,result[3].index(k))
-                            else:
-                                node[knobName].setExpression('',result[3].index(k))
-                                node[knobName].setValue(result[0])
-                        except:
-                                pass
+            for k in result[3]:
+                for node in nodes:                                  
+                    try:
+                        if k != '':
+                            node[knobName].setExpression(k,result[3].index(k))
+                        else:
+                            node[knobName].setExpression('',result[3].index(k))
+                            node[knobName].setValue(result[0])
+                    except:
+                            pass
