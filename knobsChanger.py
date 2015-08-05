@@ -13,7 +13,7 @@ class KnobsChanger(nukescripts.PythonPanel):
 
         knobToChange = getattr(nuke,knobClass)
 
-        # exceptions for those knob classes as they need more args
+        # set source knobs dictionary
         self.knob = {}
 
         if knobClass in ('Enumeration_Knob', 'Pulldown_Knob'):
@@ -25,10 +25,10 @@ class KnobsChanger(nukescripts.PythonPanel):
             for pos in range(knobObject.arraySize()):
                 name = str(pos)
                 self.knob[name] = knobToChange(knobName, name)
-
         else:
             self.knob[self.knobName] = knobToChange(knobName)
 
+        # add source knobs
         if knobClass == 'IArray_Knob':
             count = 0
             for k,v in sorted(self.knob.items()):
@@ -37,9 +37,7 @@ class KnobsChanger(nukescripts.PythonPanel):
                 if count % self.knobObject.width() != 0:
                     k.clearFlag(nuke.STARTLINE)
                 count += 1
-
         else:
-
             for k,v in self.knob.items():
                 k = v
                 self.addKnob(k)
@@ -57,17 +55,18 @@ class KnobsChanger(nukescripts.PythonPanel):
         if knobClass in ('Enumeration_Knob', 'Pulldown_Knob'):
             self.exprCheck.setVisible(False)
 
+        # set expressions knobs dictionary
         self.expr = {}
 
         if hasattr(knobObject,'arraySize'):       
             for pos in range(knobObject.arraySize()):
                 name = knobObject.name() + str(pos)
                 self.expr[name] = nuke.EvalString_Knob(name, '=')
-
         else:
             name = knobObject.name()
             self.expr[name] = nuke.EvalString_Knob(name, '=')
 
+        # add expression knobs
         for k,v in self.expr.items():
             k = v
             self.addKnob(k)
@@ -76,7 +75,7 @@ class KnobsChanger(nukescripts.PythonPanel):
         # CALLBACKS
     def knobChanged(self, knob):
      
-        # main knob callbacks 
+        # source knob callbacks 
         for k in sorted(self.knob.keys()): 
             if self.knob[k] and self.autoUpdate.value() == True:
                 for self.node in self.nodes:
@@ -95,6 +94,7 @@ class KnobsChanger(nukescripts.PythonPanel):
 
         # expression callbacks
         self.exprValues = []
+
         if self.exprCheck.value() == True:
             
             for k,v in self.expr.items():
@@ -127,6 +127,9 @@ class KnobsChanger(nukescripts.PythonPanel):
             self.autoUpdateF = False
         else:
             self.autoUpdateF = True
+
+        if self.knobClass == 'IArray_Knob':
+
 
     def showModalDialog(self):
         nukescripts.PythonPanel.showModalDialog(self)
