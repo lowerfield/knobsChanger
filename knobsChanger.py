@@ -6,6 +6,17 @@ class KnobsChanger(nukescripts.PythonPanel):
     def __init__(self, knobClass, knobName, knobObject, nodes):
         nukescripts.PythonPanel.__init__( self, "Parameter Changer")
 
+        def addKnobs(kwargs = {}, value = None):
+            for k,v in kwargs.items():
+                k = v
+                self.addKnob(k)
+                if value == 'setValue':
+                    k.setValue(knobObject.value())
+                elif value == 'steVisible':
+                    k.setVisible(False)
+                else:
+                    pass
+
         self.knobClass = knobClass 
         self.knobObject = knobObject
         self.nodes = nodes
@@ -38,10 +49,7 @@ class KnobsChanger(nukescripts.PythonPanel):
                     k.clearFlag(nuke.STARTLINE)
                 count += 1
         else:
-            for k,v in self.knob.items():
-                k = v
-                self.addKnob(k)
-                k.setValue(knobObject.value())
+            addKnobs(self.knob, 'setValue')
 
         # add auto update knob
         self.autoUpdate = nuke.Boolean_Knob('', 'Enable UI update')
@@ -67,10 +75,7 @@ class KnobsChanger(nukescripts.PythonPanel):
             self.expr[name] = nuke.EvalString_Knob(name, '=')
 
         # add expression knobs
-        for k,v in self.expr.items():
-            k = v
-            self.addKnob(k)
-            k.setVisible(False)
+        addKnobs(self.expr, 'setVisible')
 
         # CALLBACKS
     def knobChanged(self, knob):
@@ -99,18 +104,20 @@ class KnobsChanger(nukescripts.PythonPanel):
         # expression callbacks
         self.exprValues = []
 
-        if self.exprCheck.value() == True:
-            
-            for k,v in self.expr.items():
+        def exprVisible(kwargs = {},boolean = None ,value = None):
+            for k,v in kwargs.items():
                 k = v
-                k.setVisible(True)
-                self.exprValues.append(k.value())
+                k.setVisible(boolean)
+                if value == 'append':
+                    self.exprValues.append(k.value())
+                else:
+                    pass
+     
+        if self.exprCheck.value() == True:
+            exprVisible(self.expr, True, 'append')
 
         elif self.exprCheck.value() == False:   
-
-            for k,v in self.expr.items():
-                k = v
-                k.setVisible(False)
+            exprVisible(self.expr, False)
 
         if self.expr.items() and self.autoUpdate.value() == True:
 
